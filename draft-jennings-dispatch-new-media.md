@@ -1,8 +1,32 @@
-# Title: a new media stack
+%%%
+    title = "New Media Stack"
+    abbrev = "new-media"
+    category = "std"
+    docName = "draft-jennings-dispatch-new-media"
+    ipr = "trust200902"
 
-## Abstract
+    [pi]
+    symrefs = "yes"
+    sortrefs = "yes"
+    toc = "yes"
+
+    [[author]]
+    initials = "C."
+    surname = "Jennings"
+    fullname = "Cullen Jennings"
+    organization = "Cisco"
+      [author.address]
+      email = "fluffy@iii.ca"
+
+%%%
+
+
+.# Abstract
 
 TODO
+
+{mainmatter}
+
 
 # Introduction
 
@@ -200,7 +224,7 @@ Retransmission of packet
 
 # Metrics
 
-
+TODO
 
 # Example
 
@@ -208,6 +232,7 @@ Retransmission of packet
 
 ### simple audio advertisement
 
+~~~
 {
   "receiveAt":[
     {
@@ -257,9 +282,11 @@ Retransmission of packet
     }
   ]
 }
+~~~
 
 ### simple audio proposal
 
+~~~
 {
   "receiveAt":[
     {
@@ -317,9 +344,10 @@ Retransmission of packet
     }
   ]
 }
+~~~
 
 ## Simple Video Example
-
+~~~
 Advertisement for simple send only camera with no audio
 
 {
@@ -366,11 +394,12 @@ Proposal sent to camera
     }
   ]
 }
+~~~
 
 ## Simulcast Video Example
 
 Advertisement same as simple camera above but proposal has two streams with different encodingID.
-
+~~~
 {
   "sendTo":[
     {
@@ -404,12 +433,12 @@ Advertisement same as simple camera above but proposal has two streams with diff
     }
   ]
 }
-
+~~~
 
 ## FEC Example
 
 Advertisement includes a FEC codec.  
-
+~~~
 {
   "sources":[
     {
@@ -432,10 +461,10 @@ Advertisement includes a FEC codec.
     }
   ]
 }
+~~~
 
-
-Proposal sent to camera
-
+## Proposal sent to camera
+~~~
 {
   "sendTo":[
     {
@@ -470,6 +499,7 @@ Proposal sent to camera
     }
   ]
 }
+~~~
 
 # Metrics, State, and Status
 
