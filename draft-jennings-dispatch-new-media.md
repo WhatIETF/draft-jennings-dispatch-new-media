@@ -30,16 +30,16 @@ TODO
 
 # Introduction
 
-This draft proposes a new media stack to replace the existing stack RTP, DTLS-SRTP, and SDP Offer Answer. The key parts of this stack are  connectivity layer, the transport layer,  the media layer, and the control layer.
+This draft proposes a new media stack to replace the existing stack RTP, DTLS-SRTP, and SDP Offer Answer. 
+The key parts of this stack are  connectivity layer, the transport layer, the media layer, and the control layer.
 
+The connectivity layer uses a simplified version of ICE [@I-D.ietf-ice-rfc5245bis], called snowflake, to find connectivity between endpoints and change the connectivity from one address to another as different networks become available or disappear.
 
-The connectivity layer uses a simplified version of ice, called snowflake, to find connectivity between endpoints and change the connectivity from one endpoint to another as different networks become available or disappear.
+The transport layer uses QUIC to provide a hop by hop encrypted, congestion controlled transport of media. Although QUIC does not currently have all of the partial reliability mechanisms to make this work, this draft assumes that they will be added to QUIC.
 
-The transport layer uses QUIC to provide a hop by hop encrypted congestion controlled transport of media. Although QUIC does not currently have all of the partial reliability mechanisms to make this work, this draft assumes  that they will be added to QUIC.
+The media layer uses existing codecs and packages them along with extra header information to provide information about the sequence of when they should be played back, which camera they came from, and media streams to be synchronized.
 
-The media layer uses existing codecs and packages them along with extra header information to provide information about the sequence of when they should be played back, which camera they came from, and they media streams are synchronize.
-
-The control layer is based on an advertisement and proposal model. Each endpoint can create an advertisement that describes what it supports including things like supported codecs and maximum bitrates. A proposal can be sent to an endpoint that tells endpoint exactly what media to send and receive and where to send it. The endpoint can accept or reject this proposal in total but cannot change any part of it.
+The control layer is based on an advertisement and proposal model. Each endpoint can create an advertisement that describes what it supports including things like supported codecs and maximum bitrates. A proposal can be sent to an endpoint that tells the endpoint exactly what media to send and receive and where to send it. The endpoint can accept or reject this proposal in total but cannot change any part of it.
 
 
 # Terminology
@@ -64,21 +64,20 @@ The control layer is based on an advertisement and proposal model. Each endpoint
 See https://github.com/fluffy/ietf/blob/master/snowflake/draft-jennings-dispatch-snowflake.md
 
 All that is needed to discover the connectivity is way to:
-
-Gather some IP/ports that may work using TURN relay, STUN, and local addresses
-A controller, which might be running in the cloud,  to tell a client to send a STUN packet and the client enforces normal STUN rate limits. 
-The receiver tells of the STUN packet informas the controller of what it received 
-The controller can tell the sender the secret that was in the packet to prove consent of the receiver and then the sending client can allow media to flow over that connection
+* Gather some IP/ports that may work using TURN relay, STUN, and local addresses.
+* A controller, which might be running in the cloud, to inform a client to send a STUN packet and the client enforces normal STUN rate limits. 
+* The receiver updates the controller on the received STUN packet.
+* The controller can tell the sender the secret that was in the packet to prove consent of the receiver and then the sending client can allow media to flow over that connection.
 
 ## New Stun
 
-The speed of setting up a new media flow is often determined by how many STUN checks need to be done. If the STUN packets are smaller, then the stun checks can be done faster without risk of causing congestion. The STUN server and client sharing a secret that they use for authentication and encryption. When talking to a public STUN server this secret is the empty string.
+The speed of setting up a new media flow is often determined by how many STUN checks need to be done. If the STUN packets are smaller, then the stun checks can be done faster without risk of causing congestion. The STUN server and client share a secret that they use for authentication and encryption. When talking to a public STUN server this secret is the empty string.
 
 ### Stun Request
 
 A STUN request consists of the following TLVs:
 
-* a magic number that uniquely identifies this as a STUN request packet with minimal risk of collision the when multiplexing.
+* a magic number that uniquely identifies this as a STUN request packet with minimal risk of collision when multiplexing.
 
 * a transaction ID that uniquely identifies this request and does not change in retransmissions of the same request.
 
@@ -108,7 +107,7 @@ The client can not send from the TURN server.
 
 # Transport Layer
 
-Any responsibility of the transport layers is to provide an end to end crypto layer equivalent to DTLS and and they must ensure adequate congestion control.
+Any responsibility of the transport layer is to provide an end to end crypto layer equivalent to DTLS and they must ensure adequate congestion control.
 
 The MTI transport layer is QUIC with packets sent in an unreliable mode.
  
@@ -116,7 +115,7 @@ This is secured by checking the fingerprints of the DTLS connection match the fi
 
 The transport layer needs to be able to set the DSCP values in transmitting packets as specified by the control layer.
 
-The transport MAY provide a compression mode to remove the redundancy of the non-encrypted portion of the media messages such as GlobalEncodingID. For example, a GlobalEncodingID could be mapped to a QUIC channel and then it might could be removed before sending the message and added back on the receiving side.
+The transport MAY provide a compression mode to remove the redundancy of the non-encrypted portion of the media messages such as GlobalEncodingID. For example, a GlobalEncodingID could be mapped to a QUIC channel and then it could be removed before sending the message and added back on the receiving side.
 
 The transport need to be able to ensure that it has a very small chance of being confused with the STUN traffic it will be multiplexed with.  
 
@@ -131,11 +130,11 @@ There are several message headers that help the receiver understand what to do w
 
 * endpoint ID: Integer to uniquely identify the endpoint with within scope of conference ID. This is set by the proposal.
 
-* source ID: integer to uniquely identify the input source within the scope of this in endpoint ID. A source could be a specific camera or a microphone. This is set by the endpoint and included in the advertisement.  
+* source ID: integer to uniquely identify the input source within the scope a endpoint ID. A source could be a specific camera or a microphone. This is set by the endpoint and included in the advertisement.  
 
-* sink ID: integer to uniquely identify the out source within the scope of this in endpoint ID. A source could be a speaker or screen. This is set by the endpoint and included in the advertisement.
+* sink ID: integer to uniquely identify the sink within the scope a endpoint ID. A sink could be a speaker or screen. This is set by the endpoint and included in the advertisement.
 
-* encoding ID: integer to uniquely identify the encoding of the stream within the scope of the stream ID.Note there may multiple encodings of data from the same source. This is set by the proposal.
+* encoding ID: integer to uniquely identify the encoding of the stream within the scope of the stream ID. Note there may be multiple encodings of data from the same source. This is set by the proposal.
 
 * salt : salt to use for forming the initialization vector for AEAD for *this* packet any any future packet in this stream with out a salt. This is created by the endpoint sending the message.  
 
@@ -143,43 +142,49 @@ There are several message headers that help the receiver understand what to do w
 
 * capture time: Time when the first sample in the message was captured. It is a NTP time in ms with the high order bits discarded. The number of bits in the capture time needs to be large enough that it does not wrap in for the lifetime of this stream. This is set by the endpoint sending the message.
 
-* sequence ID: When the data captured for a single point in time is too large to fit in a single message, it can be split into multiple chunks which are sequentially numbered starting at 0 with the chunk ID. This is set by the endpoint sending the message.
+* sequence ID: When the data captured for a single point in time is too large to fit in a single message, it can be split into multiple chunks which are sequentially numbered starting at 0 corresponding to the first chunk of the message. This is set by the endpoint sending the message.
 
 * GlobalMessageID: 64 bit hash of concatenation of conference ID, endpoint ID, encoding ID, sequence ID
 
-
 * active level: this is a number from 0 to 100 indicates the level that the sender of this media wishes it to be considered active media. For example if it was voice, it would be 100 if the person was clearly speaking, and 0 if not, and perhaps a value in the middle if it was uncertain. This allows an media switch to select the active speaker in the in a conference call.
 
-* room location: get left right screens correct for video and allow for spacial audio
+* room location: get left right screens correct for video and allow for spatial audio
 
 * reference Frame : bool to indicate if this message is part of a reference frame
 
-* DSCP : DSCP to use on transmissions of this message and future message on this GlobalEncodingID
+* DSCP : DSCP to use on transmissions of this message and future messages on this GlobalEncodingID
 
-* layer ID : Indication which later is for scalable video codecs. SFU may use this to decide what to drop.
+* layer ID : Indication which layer is for scalable video codecs. SFU may use this to selectively drop a frame.
 
-The keys used for the AEAD and unique to a given conference ID and endpoint ID.
+The keys used for the AEAD are unique to a given conference ID and endpoint ID.
 
-If the message has any of the following headers, they must occur in the following order followed by all other headers: GlobalEncodingID, GlobalMessageID, conference ID, endpoint ID, and encoding ID, sequence ID, active level, DSCP
- 
-Every second there much be at least one message in each encoding that contains the conference ID, endpoint ID, and encoding ID, salt, and sequence ID headers but they are not needed in every packet. If they are not all present, then the GlobalEncodingID must be included.
+If the message has any of the following headers, they must occur in the following order followed by all other headers:
+~~~
+ GlobalEncodingID, GlobalMessageID, conference ID, endpoint ID, and encoding ID, sequence ID, active level, DSCP
+~~~
+
+Every second there much be at least one message in each encoding that contains:
+~~~
+conference ID, endpoint ID, encoding ID, salt, and sequence ID headers but they are not needed in every packet. 
+~~~
+If none of these are available, then the GlobalEncodingID must be included.
 
 The sequence ID or GlobalMessageID is required in every message and periodically there should be message with the capture time.
 
 
 ## Securing the messages
 
-The whole message is end to end secured with AEAD. The headers are authenticated while the payload data is authenticated and encrypt. Similar to how the IV for AES-GCM is calculated in SRTP, in this case the IV is computed by xor'ing the salt with the concatenation of the GlobalEncodingID and low 64 bits of sequence ID. The message consists of the authenticated data, followed by the encrypted data , then the authentication tag.
+The whole message is end to end secured with AEAD. The headers are authenticated while the payload data is authenticated and encrypted. Similar to how the IV for AES-GCM is calculated in SRTP, in this case the IV is computed by xor'ing the salt with the concatenation of the GlobalEncodingID and low 64 bits of sequence ID. The message consists of the authenticated data, followed by the encrypted data , then the authentication tag.
 
 ## Sender requests
 
 The control layer supports requesting retransmission of a particular media message identified by IDs and capture time it would contain.
 
-The control later layer supports requesting a maximum rate for each given encoding ID.
+The control layer supports requesting a maximum rate for each given encoding ID.
 
 ## Data Codecs
 
-Data messages including raw bytes, xml, senml can all be sent just like media by selecting an appropriate codec and a software based source or sink. An additional parameter to the codec can indicate if reliably deliver is needed and if in order deliver is needed.
+Data messages including raw bytes, xml, senml can all be sent just like media by selecting an appropriate codec and a software based source or sink. An additional parameter to the codec can indicate if reliably delivery is needed and if in order delivery is needed.
 
 
 ## Forward Error Correction
@@ -193,11 +198,11 @@ G711, Opus, AOM-1
 
 ## Message Key Agreement
 
-The secret for encrypting messages can be provided in the proposal by value or by a reference. The references approach allows the client to get it from a messaging system where the server creating the proposal may not have access to the the secret. For example, it might come from a system like <TODO insert new BOF stuff>.
+The secret for encrypting messages can be provided in the proposal by value or by a reference. The reference approach allows the client to get it from a messaging system where the server creating the proposal may not have access to the the secret. For example, it might come from a system like <TODO insert new BOF stuff>.
 
 # Control Layer
 
-The control layer needs and API to find out what the the capabilities of the device are, and then a way to set up sending and receiving stream. Info that needs to be controlled with the API include:
+The control layer needs an API to find out what the capabilities of the device are, and then a way to set up sending and receiving stream. Info that needs to be controlled with the API include:
 
 All media flow are only in one direction
 
@@ -211,7 +216,6 @@ Max video receive streams
 
 Codecs can be encodeOnly, decodeOnly, or both
 
-
 lip sync groups
 
 Temporal spatial trade off
@@ -222,9 +226,8 @@ Max bandwidth for encoding
 
 Retransmission of packet
 
-# Metrics
+Metrics
 
-TODO
 
 # Example
 
