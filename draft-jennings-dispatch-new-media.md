@@ -23,7 +23,7 @@
 
 .# Abstract
 
-TODO
+A new stack heirarchy for communucations.
 
 {mainmatter}
 
@@ -37,7 +37,7 @@ The connectivity layer uses a simplified version of ICE [@I-D.ietf-ice-rfc5245bi
 
 The transport layer uses QUIC to provide a hop by hop encrypted, congestion controlled transport of media. Although QUIC does not currently have all of the partial reliability mechanisms to make this work, this draft assumes that they will be added to QUIC.
 
-The media layer uses existing codecs and packages them along with extra header information to provide information about the sequence of when they should be played back, which camera they came from, and media streams to be synchronized.
+The media layer uses existing codecs and packages them along with extra header information to provide information about, when the sequence needs to be played back, which camera it came from, and media streams to be synchronized.
 
 The control layer is based on an advertisement and proposal model. Each endpoint can create an advertisement that describes what it supports including things like supported codecs and maximum bitrates. A proposal can be sent to an endpoint that tells the endpoint exactly what media to send and receive and where to send it. The endpoint can accept or reject this proposal in total but cannot change any part of it.
 
@@ -64,6 +64,7 @@ The control layer is based on an advertisement and proposal model. Each endpoint
 See https://github.com/fluffy/ietf/blob/master/snowflake/draft-jennings-dispatch-snowflake.md
 
 All that is needed to discover the connectivity is way to:
+
 * Gather some IP/ports that may work using TURN relay, STUN, and local addresses.
 * A controller, which might be running in the cloud, to inform a client to send a STUN packet and the client enforces normal STUN rate limits. 
 * The receiver updates the controller on the received STUN packet.
@@ -91,7 +92,7 @@ The STUN requests are transmitted with the same retransmission and congestion al
 
 A STUN response consists of the following TLVs:
 
-* a magic number that uniquely identifies this as a STUN response packet with minimal risk of collision the when multiplexing.
+* a magic number that uniquely identifies this as a STUN response packet with minimal risk of collision when multiplexing.
 
 * the transaction ID from the request.
 
@@ -101,13 +102,49 @@ The packet is encrypted where the first two fields are the magic number and tran
 
 ## New TURN 
 
-Out of band, the client tells the TURN server the fingerprint of the cert is uses to auth with and the TURN server gives the client two public IP:port address pairs. One is called inbound and other called outbound. The client connects to the outbound port and authenticates TURN server vias TLS domain name of server. The TURN server authenticates the client using mutual TLS with fingerprint of cert client provides. Any time a message or stun packet is received on the matched inband port, the TURN server forwards it to the client(s) connected to the outbound port. 
+Out of band, the client tells the TURN server the fingerprint of the cert it uses to authenticate with and the TURN server gives the client two public IP:port address pairs. One is called inbound and other called outbound. The client connects to the outbound port and authenticates to TURN server vias TLS domain name of server. The TURN server authenticates the client using mutual TLS with fingerprint of cert provided by the client. Any time a message or stun packet is received on the matched inbound port, the TURN server forwards it to the client(s) connected to the outbound port. 
 
 The client can not send from the TURN server. 
 
+~~~
+        Client A      Turn Server     Client B
+    (Media Receiver)                (Media Sender) 
+          |              |              |
+          |              |              |
+          |              |              |
+          |(1) OnInit Register (A's fingerprint)
+          |------------->|              |
+          |              |              |
+          |              |              |
+          |(2) Register  Response (Port Pair (L,R))
+          |<-------------|              |
+          |              |              |
+          |              |              |
+          | L(left of Server), R(Right of Server)
+          |              |              |
+          |              |              |
+          |              |              |
+          |(3) Setup TLS Connection (L port)
+          |..............|              |
+          |              |              |
+          |              |              |
+          |              |              | B send's media to A
+          |              |              |
+          |              |              |
+          |              |              |
+          |              |(4) Media Tx (Received on Port R)
+          |              |<-------------|
+          |              |              |
+          |              |              |
+          |(5) Media Tx (Sent from Port L)
+          |<-------------|              |
+          |              |              |
+          |              |              |
+~~~
+
 # Transport Layer
 
-Any responsibility of the transport layer is to provide an end to end crypto layer equivalent to DTLS and they must ensure adequate congestion control.
+The responsibility of the transport layer is to provide an end to end crypto layer equivalent to DTLS and they must ensure adequate congestion control.
 
 The MTI transport layer is QUIC with packets sent in an unreliable mode.
  
@@ -126,46 +163,53 @@ Each message consist of a set of TLV headers with metadata about the packet, fol
 
 There are several message headers that help the receiver understand what to do with the media. The TLV header are the follow:
 
-* conference ID: Integer that will be globally unique identifier for the for all applications using a common call signaling system. This is set by the proposal.
+* Conference ID: Integer that will be globally unique identifier for the for all applications using a common call signaling system. This is set by the proposal.
 
-* endpoint ID: Integer to uniquely identify the endpoint with within scope of conference ID. This is set by the proposal.
+* Endpoint ID: Integer to uniquely identify the endpoint with within scope of conference ID. This is set by the proposal.
 
-* source ID: integer to uniquely identify the input source within the scope a endpoint ID. A source could be a specific camera or a microphone. This is set by the endpoint and included in the advertisement.  
+* Source ID: integer to uniquely identify the input source within the scope a endpoint ID. A source could be a specific camera or a microphone. This is set by the endpoint and included in the advertisement.  
 
-* sink ID: integer to uniquely identify the sink within the scope a endpoint ID. A sink could be a speaker or screen. This is set by the endpoint and included in the advertisement.
+* Sink ID: integer to uniquely identify the sink within the scope a endpoint ID. A sink could be a speaker or screen. This is set by the endpoint and included in the advertisement.
 
-* encoding ID: integer to uniquely identify the encoding of the stream within the scope of the stream ID. Note there may be multiple encodings of data from the same source. This is set by the proposal.
+* Encoding ID: integer to uniquely identify the encoding of the stream within the scope of the stream ID. Note there may be multiple encodings of data from the same source. This is set by the proposal.
 
-* salt : salt to use for forming the initialization vector for AEAD for *this* packet any any future packet in this stream with out a salt. This is created by the endpoint sending the message.  
+* Salt : salt to use for forming the initialization vector for AEAD. The salt shall be sent as part of the packet and need not be sent in alll
+the packets. This is created by the endpoint sending the message.  
 
 * GlobalEncodingID: 64 bit hash of concatenation of conference ID, endpoint ID, stream ID, encoding ID
 
-* capture time: Time when the first sample in the message was captured. It is a NTP time in ms with the high order bits discarded. The number of bits in the capture time needs to be large enough that it does not wrap in for the lifetime of this stream. This is set by the endpoint sending the message.
+* Capture time: Time when the first sample in the message was captured. It is a NTP time in ms with the high order bits discarded. The number of bits in the capture time needs to be large enough that it does not wrap in for the lifetime of this stream. This is set by the endpoint sending the message.
 
-* sequence ID: When the data captured for a single point in time is too large to fit in a single message, it can be split into multiple chunks which are sequentially numbered starting at 0 corresponding to the first chunk of the message. This is set by the endpoint sending the message.
+* Sequence ID: When the data captured for a single point in time is too large to fit in a single message, it can be split into multiple chunks which are sequentially numbered starting at 0 corresponding to the first chunk of the message. This is set by the endpoint sending the message.
 
 * GlobalMessageID: 64 bit hash of concatenation of conference ID, endpoint ID, encoding ID, sequence ID
 
-* active level: this is a number from 0 to 100 indicates the level that the sender of this media wishes it to be considered active media. For example if it was voice, it would be 100 if the person was clearly speaking, and 0 if not, and perhaps a value in the middle if it was uncertain. This allows an media switch to select the active speaker in the in a conference call.
+* Active level: this is a number from 0 to 100 indicates the level that the sender of this media wishes it to be considered active media. For example if it was voice, it would be 100 if the person was clearly speaking, and 0 if not, and perhaps a value in the middle if it was uncertain. This allows an media switch to select the active speaker in the in a conference call.
 
-* room location: get left right screens correct for video and allow for spatial audio
+* Room location: get left right screens correct for video and allow for spatial audio
 
-* reference Frame : bool to indicate if this message is part of a reference frame
+* Reference Frame : bool to indicate if this message is part of a reference frame
 
 * DSCP : DSCP to use on transmissions of this message and future messages on this GlobalEncodingID
 
-* layer ID : Indication which layer is for scalable video codecs. SFU may use this to selectively drop a frame.
+* Layer ID : Indication which layer is for scalable video codecs. SFU may use this to selectively drop a frame.
 
 The keys used for the AEAD are unique to a given conference ID and endpoint ID.
 
 If the message has any of the following headers, they must occur in the following order followed by all other headers:
+
 ~~~
- GlobalEncodingID, GlobalMessageID, conference ID, endpoint ID, and encoding ID, sequence ID, active level, DSCP
+ GlobalEncodingID, GlobalMessageID, conference ID, endpoint ID, encoding ID, 
+ sequence ID, active level, DSCP
 ~~~
 
 Every second there much be at least one message in each encoding that contains:
+
 ~~~
-conference ID, endpoint ID, encoding ID, salt, and sequence ID headers but they are not needed in every packet. 
+conference ID, endpoint ID, encoding ID, salt, and sequence ID headers 
+
+but they are not needed in every packet. 
+
 ~~~
 If none of these are available, then the GlobalEncodingID must be included.
 
@@ -350,9 +394,9 @@ Metrics
 ~~~
 
 ## Simple Video Example
-~~~
-Advertisement for simple send only camera with no audio
 
+### Advertisement for simple send only camera with no audio
+~~~
 {
   "sources":[
     {
@@ -372,9 +416,11 @@ Advertisement for simple send only camera with no audio
     }
   ]
 }
+~~~
 
-Proposal sent to camera
+### Proposal sent to camera
 
+~~~
 {
   "sendTo":[
     {
@@ -401,7 +447,7 @@ Proposal sent to camera
 
 ## Simulcast Video Example
 
-Advertisement same as simple camera above but proposal has two streams with different encodingID.
+### Advertisement same as simple camera above but proposal has two streams with different encodingID.
 ~~~
 {
   "sendTo":[
@@ -440,7 +486,7 @@ Advertisement same as simple camera above but proposal has two streams with diff
 
 ## FEC Example
 
-Advertisement includes a FEC codec.  
+### Advertisement includes a FEC codec.  
 ~~~
 {
   "sources":[
@@ -466,7 +512,7 @@ Advertisement includes a FEC codec.
 }
 ~~~
 
-## Proposal sent to camera
+###  Proposal sent to camera
 ~~~
 {
   "sendTo":[
