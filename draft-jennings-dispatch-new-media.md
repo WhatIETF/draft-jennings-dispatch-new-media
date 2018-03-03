@@ -23,7 +23,8 @@
 
 .# Abstract
 
-A new stack hierarchy for communications.
+A sketch of a proposal for a new meida stack for interactive
+communications.
 
 {mainmatter}
 
@@ -35,10 +36,11 @@ RTP, DTLS-SRTP, and SDP Offer Answer.  The key parts of this stack are
 connectivity layer, the transport layer, the media layer, and the
 control layer.
 
-The connectivity layer uses a simplified version of ICE
-[@I-D.ietf-ice-rfc5245bis], called snowflake, to find connectivity
+The connectivity layer uses a simplified version of ICE, called
+snowflake [@I-D.jennings-dispatch-snowflake], to find connectivity
 between endpoints and change the connectivity from one address to
-another as different networks become available or disappear.
+another as different networks become available or disappear. It is
+based on ideas from [@I-D.jennings-mmusic-ice-fix].
 
 The transport layer uses QUIC to provide a hop by hop encrypted,
 congestion controlled transport of media. Although QUIC does not
@@ -88,7 +90,7 @@ cannot change any part of it.
 
 ## Snowflake - New ICE
 
-See https://github.com/fluffy/ietf/blob/master/snowflake/draft-jennings-dispatch-snowflake.md
+See [@I-D.ennings-dispatch-snowflake]
 
 All that is needed to discover the connectivity is way to:
 
@@ -374,15 +376,30 @@ The secret for encrypting messages can be provided in the proposal by
 value or by a reference. The reference approach allows the client to
 get it from a messaging system where the server creating the proposal
 may not have access to the the secret. For example, it might come from
-a system like <TODO insert new BOF stuff>.
+a system like [@I-D.barnes-mls-protocol].
 
 # Control Layer
 
 The control layer needs an API to find out what the capabilities of
 the device are, and then a way to set up sending and receiving
-stream. Info that needs to be controlled with the API include:
+stream. All media flow are only in one direction. The controll is
+broken intto controll of conenctiviuty and transpotrs, and controll of
+media streams.
 
-All media flow are only in one direction
+## Transport Capabilities
+
+## Media Capabilities
+
+
+## Transport Configuration
+
+## Media Configuration
+
+
+
+ Info that needs to be controlled with the API include:
+
+
 
 Max width, height. Must support all aspects.  
 
@@ -407,7 +424,29 @@ Retransmission of packet
 Metrics
 
 
-# Example
+
+# Call Signalling 
+
+Call signalling is out of scope for usages like WebRTC but other 
+usages may want a common REST API they can use. It works be having the 
+client connect to a server when it starts up and send its current 
+advertisement and open a web socket to receive proposals from the 
+server. A client can make a rest call indicating the parties(s) it 
+wishes to connect to and the server will then send propels to all 
+clients that connect them. The signalling is based on the the 
+advertimsment proposal ideas from [@I-D.peterson-sipcore-advprop]. 
+
+
+## Switched Forwarding Unit (SFU) 
+
+When several clients are in conference call, the SFU can forward 
+packets based on looking at which clients needs a given 
+GlobalEncodingID. By looking at the "active level", the SFU can figure 
+out which endpoints are the active speaker and forward only those. The 
+SFU never changes anything in the message. 
+
+
+# Signalling Examples
 
 ## Simple Audio Example
 
@@ -692,38 +731,17 @@ streams with different encodingID.
 
 ## Connectivity
 
+TDB
+
 ## Transports
+
+TBD
 
 ## Streams
 
+TBD
+
 ## Alarms
 
-
-# Call Signalling
-
-Call signalling is out of scope for usages like WebRTC but other
-usages may want a common REST API they can use. It works be having the
-client connect to a server when it starts up and send its current
-advertisement and open a web socket to receive proposals from the
-server. A client can make a rest call indicating the parties(s) it
-wishes to connect to and the server will then send propels to all
-clients that connect them.
-
-## Switched Forwarding Unit (SFU)
-
-When several clients are in conference call, the SFU can forward
-packets based on looking at which clients needs a given
-GlobalEncodingID. By looking at the "active level", the SFU can figure
-out which endpoints are the active speaker and forward only those. The
-SFU never changes anything in the message.
-
-
-
-# References
-
-draft-peterson-sipcore-advprop
-
-draft-jennings-mmusic-ice-fix
-
-
+TBD
 
