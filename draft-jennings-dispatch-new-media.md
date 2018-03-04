@@ -90,7 +90,7 @@ cannot change any part of it.
 
 ## Snowflake - New ICE
 
-See [@I-D.ennings-dispatch-snowflake]
+See [@I-D.jennings-dispatch-snowflake]
 
 All that is needed to discover the connectivity is way to:
 
