@@ -33,8 +33,8 @@ communications.
 
 This draft proposes a new media stack to replace the existing stack
 RTP, DTLS-SRTP, and SDP Offer Answer.  The key parts of this stack are
-connectivity layer, the transport layer, the media layer, and the
-control layer.
+connectivity layer, the transport layer, the media layer, a control
+API, and the signalling layer.
 
 The connectivity layer uses a simplified version of ICE, called
 snowflake [@I-D.jennings-dispatch-snowflake], to find connectivity
@@ -52,7 +52,13 @@ extra header information to provide information about, when the
 sequence needs to be played back, which camera it came from, and media
 streams to be synchronized.
 
-The control layer is based on an advertisement and proposal
+The control API is an abstract API that provides a way for the media
+stack to report it capabilities and features and a way for the an
+application tell the media stack how it should be
+configured. Configuration includes what codec to use, size and frame
+rate of video, and where to send the media.
+
+The signalling layer is based on an advertisement and proposal
 model. Each endpoint can create an advertisement that describes what
 it supports including things like supported codecs and maximum
 bitrates. A proposal can be sent to an endpoint that tells the
@@ -63,7 +69,7 @@ cannot change any part of it.
 
 # Terminology
 
-* media stream: Flow of information from a single sensor. For example,
+* media stream: Stream of information from a single sensor. For example,
   a video stream from a single camera. A stream may have multiple
   encodings for example video at different resolutions.
 
@@ -72,13 +78,18 @@ cannot change any part of it.
   on other encodings such as forward error corrections or in the case
   of scalable video codecs.
 
+* flow: A logical transport between two computers. Many media strams
+  can be transported over a single flow. The actually IP address and
+  ports used to transport data in the flow may change over time as
+  connectivity changes.
+
 * message: some data or media that to be sent across the network along
   with metadata about it. Similar to an RTP packet.
 
 * media source: a camera, microphone or other source of data on an
   endpoint
 
-* media sink:n a speaker, screen, or other destination for data on an
+* media sink: a speaker, screen, or other destination for data on an
   endpoint
 
 * TLV: Tag Length Value. When used in the draft, the Tag, Length, and
@@ -90,23 +101,30 @@ cannot change any part of it.
 
 ## Snowflake - New ICE
 
-See [@I-D.jennings-dispatch-snowflake]
-
 All that is needed to discover the connectivity is way to:
 
 * Gather some IP/ports that may work using TURN relay, STUN, and local
-addresses.
+  addresses.
 
 * A controller, which might be running in the cloud, to inform a
-  client to send a STUN packet and the client enforces normal STUN
-  rate limits.
+  client to send a STUN packet from a given source IP/port to a given
+  destination IP/port.
   
-  * The receiver updates the controller on the received STUN packet.
+* The receiver notifies the controller about infomation on received
+  STUN packets.
   
 * The controller can tell the sender the secret that was in the packet
-  to prove consent of the receiver and then the sending client can
-  allow media to flow over that connection.
+  to prove consent of the receiver to receive data then the sending
+  client can allow media to flow over that connection.
   
+The actually algorithm used to decide on what pairs of addresses are
+tested and in what order does not need to be agreed on by both the
+sides of the call - only the controller needs to know it. This allows
+the controller to use machine learning, past history, and heurstics to
+find an optimal connection much faster than something like ICE.
+
+The details of this aproach are described in
+[@I-D.jennings-dispatch-snowflake].
 
 ## New Stun
 
@@ -168,6 +186,11 @@ of cert provided by the client. Any time a message or stun packet is
 received on the matched inbound port, the TURN server forwards it to
 the client(s) connected to the outbound port.
 
+A single  TURN connection can be used for mutliple differnt calls
+or session at the same time and a cleint could choose to allocate the
+TURN connection at the time that it started up. It does not need to be
+done on a per session basis.
+
 The client can not send from the TURN server. 
 
 ~~~
@@ -210,7 +233,8 @@ The client can not send from the TURN server.
 
 The responsibility of the transport layer is to provide an end to end
 crypto layer equivalent to DTLS and they must ensure adequate
-congestion control.
+congestion control. The transport layer brings up a flow between two
+comptuers. This flow can be used by multiple media streams. 
 
 The MTI transport layer is QUIC with packets sent in an unreliable
 mode.
@@ -311,20 +335,25 @@ endpoint ID.
 If the message has any of the following headers, they must occur in
 the following order followed by all other headers:
 
-~~~
- GlobalEncodingID, GlobalMessageID, conference ID, endpoint ID, encoding ID, 
- sequence ID, active level, DSCP
-~~~
+1.  GlobalEncodingID,
+2. GlobalMessageID,
+3. conference ID,
+4. endpoint ID,
+5. encoding ID, 
+6. sequence ID,
+7. active level,
+8. DSCP
 
 Every second there much be at least one message in each encoding that
 contains:
 
-~~~
-conference ID, endpoint ID, encoding ID, salt, and sequence ID headers 
+* conference ID,
+* endpoint ID,
+* encoding ID,
+* salt,
+* and sequence ID headers 
 
 but they are not needed in every packet. 
-
-~~~
 
 If none of these are available, then the GlobalEncodingID must be
 included.
@@ -367,8 +396,21 @@ needs to be defined.
 
 ## MTI Codecs
 
-G711, Opus, AOM-1
+Implementation MUST support at least G711, Opus, H.264 and AOM-1
 
+Video codecs use square pixels.
+
+Video codecs MUST support any aspect ratio within the limits of their
+max width and height.
+
+Video codecs MUST support a min width and min height of 1. 
+
+All video on the wire is oriented such that the first scan line in the
+frame is up and first pixel in the scan line is on the left. 
+
+T.38 fax and DTMF are not supported. Fax can be sent as a TIFF imager
+over a data channel and DTFM can be done as an application specific
+information over a data channel.
 
 ## Message Key Agreement
 
@@ -386,44 +428,139 @@ stream. All media flow are only in one direction. The controll is
 broken intto controll of conenctiviuty and transpotrs, and controll of
 media streams.
 
-## Transport Capabilities
+## Media Capabilities API
 
-## Media Capabilities
+Send and receive codecs are consider seprate codecs and can have
+seprate capabilities though the default to the same if not specified seperately. 
 
+For each send or receive audio codec, an API to learn:
 
-## Transport Configuration
+* codec name 
+* the max sample rate
+* the max sample size 
+* the max bitrate
+* max number of streams to decode 
 
-## Media Configuration
+For each send or receive video codec, an API to learn:
 
+* codec name 
+* the max width
+* the max height
+* the max frame rate 
+* the max pixel  depth 
+* the max bitrate
+* the max pixel rate ( pixels / second )
+* max number of streams to decode
+* max number of stream to encode 
 
-
- Info that needs to be controlled with the API include:
-
-
-
-Max width, height. Must support all aspects.  
-
-Max bit rate, pixel rate , frame rate
-
-Max audio receive streams
-
-Max video receive streams
-
-Codecs can be encodeOnly, decodeOnly, or both
-
-lip sync groups
-
-Temporal spatial trade off
-
-DSCP
-
-Max bandwidth for encoding
-
-Retransmission of packet
-
-Metrics
+## Transport Capabilties API
 
 
+An API to get information for remote connectivity inlcuidng:
+
+*  set the IP, port, and credential for each TURN server 
+* can return the IP, port tuple for the remote side to send to TURN 
+server
+* gather local IP, port, protcol tuples for receiving media
+* report SHA256 fingrerpinrt of local TLS certificate 
+
+
+## Transport Configuration API
+
+
+To create a new flow, the information that can be configured is:
+
+* turn server to use 
+* list of IP, Port, Protcol tuples to try connecting to
+* TLS fingerprint of far side 
+
+An api to allow modificaiton of the follow atributes of a flow:
+
+* total max bandwidwith for flow
+* forward error correection scheme for flow
+* retransmition scheme for flow 
+* adition IP, Port, Protcol pairs to send to that may inmprove connectivity 
+
+## Media Configuration API 
+
+For all streams:
+
+* set confernce ID
+* set endpoint ID
+* set encoding ID
+* salt and secret for AEAD 
+
+For each transmitted audio steam, a way to set the:
+
+* audio codec to use 
+* media source to connect 
+* max encoded bitrate
+* sample rate
+* sample size
+* number of channels to encode
+* packetization time
+* process as one of : automatically set, raw, speach, music
+* DSCP value to use 
+
+For each transmitted video stream, a way to set
+
+* video codec to use
+* media source to connect to 
+* max width and max height 
+* max encoded bitrate
+* sample rate
+* sample size
+* process as one of :  automatically set, rapidly changing video, fine detail video 
+* DSCP value to use
+* for layered codec, a layer ID and set of layers IDs this depends on 
+
+For each transmitted video stream, a way to tell it to:
+
+* encode the next frame as an intra frame
+
+For each received audo stream:
+
+* audio codec to use 
+* media sink to connect to
+* lip sync flag 
+
+For each reveived video stream:
+
+* video codec to use 
+* media sink to connect to
+* lip sync flag 
+
+Note on lip sync: For any streams that have the lip sync flag set to
+true, the render attempts to syncronize thier play back. 
+
+## Flow Metrics API
+
+For each flow, report:
+
+* report connectivity state
+* report bits sent 
+* report packets lost
+* report estimated RTT
+* report SHA256 fingerprint for certificate of far side
+
+## Stream Metrics API
+
+For sending streams:
+
+* Bits sent
+* packets lost 
+
+For receiving streams:
+
+* capture time of most recently receives packet 
+* endpoint ID of more recently received packet
+* bits reeceived
+* packets losts
+
+For video streams (send & receive):
+
+* current encoded width and height
+* current encoded frame rate
 
 # Call Signalling 
 
@@ -726,22 +863,3 @@ streams with different encodingID.
   ]
 }
 ~~~
-
-# Metrics, State, and Status
-
-## Connectivity
-
-TDB
-
-## Transports
-
-TBD
-
-## Streams
-
-TBD
-
-## Alarms
-
-TBD
-
