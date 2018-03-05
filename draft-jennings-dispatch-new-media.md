@@ -23,7 +23,7 @@
 
 .# Abstract
 
-A sketch of a proposal for a new meida stack for interactive
+A sketch of a proposal for a new media stack for interactive
 communications.
 
 {mainmatter}
@@ -103,15 +103,15 @@ cannot change any part of it.
 
 All that is needed to discover the connectivity is way to:
 
-* Gather some IP/ports that may work using TURN relay, STUN, and local
+* Gather some IP/ports that may work using TURN2 relay, STUN2, and local
   addresses.
 
 * A controller, which might be running in the cloud, to inform a
-  client to send a STUN packet from a given source IP/port to a given
+  client to send a STUN2 packet from a given source IP/port to a given
   destination IP/port.
   
-* The receiver notifies the controller about infomation on received
-  STUN packets.
+* The receiver notifies the controller about information on received
+  STUN2 packets.
   
 * The controller can tell the sender the secret that was in the packet
   to prove consent of the receiver to receive data then the sending
@@ -120,26 +120,26 @@ All that is needed to discover the connectivity is way to:
 The actually algorithm used to decide on what pairs of addresses are
 tested and in what order does not need to be agreed on by both the
 sides of the call - only the controller needs to know it. This allows
-the controller to use machine learning, past history, and heurstics to
+the controller to use machine learning, past history, and heuristics to
 find an optimal connection much faster than something like ICE.
 
-The details of this aproach are described in
+The details of this approach are described in
 [@I-D.jennings-dispatch-snowflake].
 
-## New Stun
+## STUN2
 
 The speed of setting up a new media flow is often determined by how
-many STUN checks need to be done. If the STUN packets are smaller,
+many STUN2 checks need to be done. If the STUN2 packets are smaller,
 then the stun checks can be done faster without risk of causing
-congestion. The STUN server and client share a secret that they use
-for authentication and encryption. When talking to a public STUN
+congestion. The STUN2 server and client share a secret that they use
+for authentication and encryption. When talking to a public STUN2
 server this secret is the empty string.
 
-### Stun Request
+### STUN2 Request
 
-A STUN request consists of the following TLVs:
+A STUN2 request consists of the following TLVs:
 
-* a magic number that uniquely identifies this as a STUN request
+* a magic number that uniquely identifies this as a STUN2 request
   packet with minimal risk of collision when multiplexing.
 
 * a transaction ID that uniquely identifies this request and does not
@@ -150,19 +150,19 @@ A STUN request consists of the following TLVs:
   secret but the JavaScript on the sending side would know the value.
 
 The packet is encrypted by using the secret and an AEAD crypto to
-create a STUN packet where the first two fields are the magic number
+create a STUN2 packet where the first two fields are the magic number
 and transaction ID which are only authenticated followed by the rest
 of the fields that are authenticated and encrypted followed by the
 AEAD authentication data.
 
-The STUN requests are transmitted with the same retransmission and
-congestion algorithms as STUN in WebRTC 1.0
+The STUN2 requests are transmitted with the same retransmission and
+congestion algorithms as STUN2 in WebRTC 1.0
 
-### Stun Response
+### STUN2 Response
 
-A STUN response consists of the following TLVs:
+A STUN2 response consists of the following TLVs:
 
-* a magic number that uniquely identifies this as a STUN response
+* a magic number that uniquely identifies this as a STUN2 response
   packet with minimal risk of collision when multiplexing.
 
 * the transaction ID from the request.
@@ -174,24 +174,24 @@ number and transaction ID which are only authenticated followed by the
 rest of the fields that are authenticated and encrypted followed by
 the AEAD authentication data.
 
-## New TURN 
+## TURN2 
 
-Out of band, the client tells the TURN server the fingerprint of the
-cert it uses to authenticate with and the TURN server gives the client
+Out of band, the client tells the TURN2 server the fingerprint of the
+cert it uses to authenticate with and the TURN2 server gives the client
 two public IP:port address pairs. One is called inbound and other
 called outbound. The client connects to the outbound port and
-authenticates to TURN server using the TLS domain name of server. The
-TURN server authenticates the client using mutual TLS with fingerprint
+authenticates to TURN2 server using the TLS domain name of server. The
+TURN2 server authenticates the client using mutual TLS with fingerprint
 of cert provided by the client. Any time a message or stun packet is
-received on the matched inbound port, the TURN server forwards it to
+received on the matched inbound port, the TURN2 server forwards it to
 the client(s) connected to the outbound port.
 
-A single  TURN connection can be used for mutliple differnt calls
-or session at the same time and a cleint could choose to allocate the
-TURN connection at the time that it started up. It does not need to be
+A single  TURN2 connection can be used for multiple different calls
+or session at the same time and a client could choose to allocate the
+TURN2 connection at the time that it started up. It does not need to be
 done on a per session basis.
 
-The client can not send from the TURN server. 
+The client can not send from the TURN2 server. 
 
 ~~~
         Client A      Turn Server     Client B
@@ -234,7 +234,7 @@ The client can not send from the TURN server.
 The responsibility of the transport layer is to provide an end to end
 crypto layer equivalent to DTLS and they must ensure adequate
 congestion control. The transport layer brings up a flow between two
-comptuers. This flow can be used by multiple media streams. 
+computers. This flow can be used by multiple media streams. 
 
 The MTI transport layer is QUIC with packets sent in an unreliable
 mode.
@@ -254,11 +254,11 @@ QUIC channel and then it could be removed before sending the message
 and added back on the receiving side.
 
 The transport need to be able to ensure that it has a very small
-chance of being confused with the STUN traffic it will be multiplexed
+chance of being confused with the STUN2 traffic it will be multiplexed
 with.
 
 
-# Media Layer - New RTP
+# Media Layer - RTP3
 
 Each message consist of a set of TLV headers with metadata about the
 packet, followed by payload data such as the output of audio or video
@@ -425,13 +425,13 @@ a system like [@I-D.barnes-mls-protocol].
 The control layer needs an API to find out what the capabilities of
 the device are, and then a way to set up sending and receiving
 stream. All media flow are only in one direction. The controll is
-broken intto controll of conenctiviuty and transpotrs, and controll of
+broken into controll of connectivity and transports, and controll of
 media streams.
 
 ## Media Capabilities API
 
-Send and receive codecs are consider seprate codecs and can have
-seprate capabilities though the default to the same if not specified seperately. 
+Send and receive codecs are consider separate codecs and can have
+separate capabilities though the default to the same if not specified separately. 
 
 For each send or receive audio codec, an API to learn:
 
@@ -439,7 +439,6 @@ For each send or receive audio codec, an API to learn:
 * the max sample rate
 * the max sample size 
 * the max bitrate
-* max number of streams to decode 
 
 For each send or receive video codec, an API to learn:
 
@@ -450,19 +449,19 @@ For each send or receive video codec, an API to learn:
 * the max pixel  depth 
 * the max bitrate
 * the max pixel rate ( pixels / second )
-* max number of streams to decode
-* max number of stream to encode 
 
-## Transport Capabilties API
+## Transport Capabilities API
 
 
-An API to get information for remote connectivity inlcuidng:
+An API to get information for remote connectivity including:
 
-*  set the IP, port, and credential for each TURN server 
-* can return the IP, port tuple for the remote side to send to TURN 
+*  set the IP, port, and credential for each TURN2 server 
+* can return the IP, port tuple for the remote side to send to TURN2 
 server
-* gather local IP, port, protcol tuples for receiving media
-* report SHA256 fingrerpinrt of local TLS certificate 
+* gather local IP, port, protocol tuples for receiving media
+* report SHA256 fingerprint of local TLS certificate
+
+* report an error for a bad TURN2 credential 
 
 
 ## Transport Configuration API
@@ -471,24 +470,26 @@ server
 To create a new flow, the information that can be configured is:
 
 * turn server to use 
-* list of IP, Port, Protcol tuples to try connecting to
+* list of IP, Port, Protocol tuples to try connecting to
 * TLS fingerprint of far side 
 
-An api to allow modificaiton of the follow atributes of a flow:
+An api to allow modification of the follow atributes of a flow:
 
-* total max bandwidwith for flow
-* forward error correection scheme for flow
-* retransmition scheme for flow 
-* adition IP, Port, Protcol pairs to send to that may inmprove connectivity 
+* total max bandwidth for flow
+* forward error correction scheme for flow
+* FEC time window 
+* retransmission scheme for flow 
+* addition IP, Port, Protocol pairs to send to that may improve connectivity 
 
 ## Media Configuration API 
 
 For all streams:
 
-* set confernce ID
+* set conference ID
 * set endpoint ID
 * set encoding ID
-* salt and secret for AEAD 
+* salt and secret for AEAD
+* flag to pause transition 
 
 For each transmitted audio steam, a way to set the:
 
@@ -499,8 +500,10 @@ For each transmitted audio steam, a way to set the:
 * sample size
 * number of channels to encode
 * packetization time
-* process as one of : automatically set, raw, speach, music
-* DSCP value to use 
+* process as one of : automatically set, raw, speech, music
+* DSCP value to use
+* flag to indicating to use constant bit rate
+
 
 For each transmitted video stream, a way to set
 
@@ -508,6 +511,7 @@ For each transmitted video stream, a way to set
 * media source to connect to 
 * max width and max height 
 * max encoded bitrate
+* max pixel rate 
 * sample rate
 * sample size
 * process as one of :  automatically set, rapidly changing video, fine detail video 
@@ -518,20 +522,32 @@ For each transmitted video stream, a way to tell it to:
 
 * encode the next frame as an intra frame
 
+For each transmitted data stream:
+
+* a way to send a data message and indicate reliable or unreliable transmission 
+
 For each received audo stream:
 
 * audio codec to use 
 * media sink to connect to
 * lip sync flag 
 
-For each reveived video stream:
+For each received video stream:
 
 * video codec to use 
 * media sink to connect to
 * lip sync flag 
 
+For each received data stream:
+
+* notification of received data messages
+
 Note on lip sync: For any streams that have the lip sync flag set to
-true, the render attempts to syncronize thier play back. 
+true, the render attempts to synchronize their play back. 
+
+## Transport Metrics
+
+* report gathering state and completion
 
 ## Flow Metrics API
 
@@ -542,6 +558,7 @@ For each flow, report:
 * report packets lost
 * report estimated RTT
 * report SHA256 fingerprint for certificate of far side
+* current 5 tuple in use 
 
 ## Stream Metrics API
 
@@ -554,8 +571,8 @@ For receiving streams:
 
 * capture time of most recently receives packet 
 * endpoint ID of more recently received packet
-* bits reeceived
-* packets losts
+* bits received
+* packets lost
 
 For video streams (send & receive):
 
@@ -565,22 +582,24 @@ For video streams (send & receive):
 # Call Signalling 
 
 Call signalling is out of scope for usages like WebRTC but other 
-usages may want a common REST API they can use. It works be having the 
-client connect to a server when it starts up and send its current 
-advertisement and open a web socket to receive proposals from the 
-server. A client can make a rest call indicating the parties(s) it 
-wishes to connect to and the server will then send propels to all 
-clients that connect them. The signalling is based on the the 
-advertimsment proposal ideas from [@I-D.peterson-sipcore-advprop]. 
+usages may want a common REST API they can use.
 
+Call signalling works be having the client connect to a server when it
+starts up and send its current advertisement and open a web socket or
+to receive proposals from the server. A client can make a rest call
+indicating the parties(s) it wishes to connect to and the server will
+then send proposals to all clients that connect them. The proposal
+tell each client exactly how to configure it's media strack and MUST
+be either completely accepted, or completely rejected.
 
-## Switched Forwarding Unit (SFU) 
+The signalling is based on the the advertisement proposal ideas from
+[@I-D.peterson-sipcore-advprop].
 
-When several clients are in conference call, the SFU can forward 
-packets based on looking at which clients needs a given 
-GlobalEncodingID. By looking at the "active level", the SFU can figure 
-out which endpoints are the active speaker and forward only those. The 
-SFU never changes anything in the message. 
+We define one round trip of signalling to be a message going from a
+client up to a server in the cloud, then down to another client which
+returns a response along the reverse path. With this definition SIP is
+takes 1.5 round trips or more if TURN is needed to set up a call while
+this takes 0.5 round trips.
 
 
 # Signalling Examples
@@ -863,3 +882,14 @@ streams with different encodingID.
   ]
 }
 ~~~
+
+
+# Switched Forwarding Unit (SFU) 
+
+When several clients are in conference call, the SFU can forward 
+packets based on looking at which clients needs a given 
+GlobalEncodingID. By looking at the "active level", the SFU can figure 
+out which endpoints are the active speaker and forward only those. The 
+SFU never changes anything in the message. 
+
+
