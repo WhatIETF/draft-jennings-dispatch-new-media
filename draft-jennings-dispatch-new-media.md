@@ -34,7 +34,7 @@ communications.
 This draft proposes a new media stack to replace the existing stack
 RTP, DTLS-SRTP, and SDP Offer Answer.  The key parts of this stack are
 connectivity layer, the transport layer, the media layer, a control
-API, and the signalling layer.
+API, and the signaling layer.
 
 The connectivity layer uses a simplified version of ICE, called
 snowflake [@I-D.jennings-dispatch-snowflake], to find connectivity
@@ -58,7 +58,7 @@ application tell the media stack how it should be
 configured. Configuration includes what codec to use, size and frame
 rate of video, and where to send the media.
 
-The signalling layer is based on an advertisement and proposal
+The signaling layer is based on an advertisement and proposal
 model. Each endpoint can create an advertisement that describes what
 it supports including things like supported codecs and maximum
 bitrates. A proposal can be sent to an endpoint that tells the
@@ -78,7 +78,7 @@ cannot change any part of it.
   on other encodings such as forward error corrections or in the case
   of scalable video codecs.
 
-* flow: A logical transport between two computers. Many media strams
+* flow: A logical transport between two computers. Many media streams
   can be transported over a single flow. The actually IP address and
   ports used to transport data in the flow may change over time as
   connectivity changes.
@@ -268,7 +268,7 @@ There are several message headers that help the receiver understand
 what to do with the media. The TLV header are the follow:
 
 * Conference ID: Integer that will be globally unique identifier for
-  the for all applications using a common call signalling system. This
+  the for all applications using a common call signaling system. This
   is set by the proposal.
 
 * Endpoint ID: Integer to uniquely identify the endpoint with within
@@ -391,12 +391,12 @@ reliably delivery is needed and if in order delivery is needed.
 ## Forward Error Correction
 
 A new Reed-Solomon based FEC scheme based on
-draft-ietf-payload-flexible-fec-scheme that provides FEC over messages
-needs to be defined.
+[@I-D.ietf-payload-flexible-fec-scheme] that provides FEC over
+messages needs to be defined.
 
 ## MTI Codecs
 
-Implementation MUST support at least G711, Opus, H.264 and AOM-1
+Implementation MUST support at least G711, Opus, H.264 and AV1
 
 Video codecs use square pixels.
 
@@ -424,8 +424,8 @@ a system like [@I-D.barnes-mls-protocol].
 
 The control layer needs an API to find out what the capabilities of
 the device are, and then a way to set up sending and receiving
-stream. All media flow are only in one direction. The controll is
-broken into controll of connectivity and transports, and controll of
+stream. All media flow are only in one direction. The control is
+broken into control of connectivity and transports, and control of
 media streams.
 
 ## Media Capabilities API
@@ -473,7 +473,7 @@ To create a new flow, the information that can be configured is:
 * list of IP, Port, Protocol tuples to try connecting to
 * TLS fingerprint of far side 
 
-An api to allow modification of the follow atributes of a flow:
+An api to allow modification of the follow attributes of a flow:
 
 * total max bandwidth for flow
 * forward error correction scheme for flow
@@ -526,7 +526,7 @@ For each transmitted data stream:
 
 * a way to send a data message and indicate reliable or unreliable transmission 
 
-For each received audo stream:
+For each received audio stream:
 
 * audio codec to use 
 * media sink to connect to
@@ -579,30 +579,30 @@ For video streams (send & receive):
 * current encoded width and height
 * current encoded frame rate
 
-# Call Signalling 
+# Call Signaling 
 
-Call signalling is out of scope for usages like WebRTC but other 
+Call signaling is out of scope for usages like WebRTC but other 
 usages may want a common REST API they can use.
 
-Call signalling works be having the client connect to a server when it
+Call signaling works be having the client connect to a server when it
 starts up and send its current advertisement and open a web socket or
 to receive proposals from the server. A client can make a rest call
 indicating the parties(s) it wishes to connect to and the server will
 then send proposals to all clients that connect them. The proposal
-tell each client exactly how to configure it's media strack and MUST
+tell each client exactly how to configure it's media stack and MUST
 be either completely accepted, or completely rejected.
 
-The signalling is based on the the advertisement proposal ideas from
+The signaling is based on the the advertisement proposal ideas from
 [@I-D.peterson-sipcore-advprop].
 
-We define one round trip of signalling to be a message going from a
+We define one round trip of signaling to be a message going from a
 client up to a server in the cloud, then down to another client which
 returns a response along the reverse path. With this definition SIP is
 takes 1.5 round trips or more if TURN is needed to set up a call while
 this takes 0.5 round trips.
 
 
-# Signalling Examples
+# Signaling Examples
 
 ## Simple Audio Example
 
@@ -734,7 +734,7 @@ Advertisement for simple send only camera with no audio
       "sourceType":"video",
       "codecs":[
         {
-          "codecName":"aom1",
+          "codecName":"av1",
           "maxBitrate":20000000,
           "maxWidth":3840,
           "maxHeight":2160,
@@ -765,7 +765,7 @@ Advertisement for simple send only camera with no audio
       "endpointID":0,
       "sourceID":0,
       "encodingID":0,
-      "codecName":"aom1",
+      "codecName":"av1",
       "AEAD":"NULL",
       "width":640,
       "height":480,
@@ -796,7 +796,7 @@ streams with different encodingID.
       "endpointID":0,
       "sourceID":0,
       "encodingID":1,
-      "codecName":"aom1",
+      "codecName":"av1",
       "AEAD":"NULL",
       "width":1920,
       "height":1080,
@@ -807,7 +807,7 @@ streams with different encodingID.
       "endpointID":0,
       "sourceID":0,
       "encodingID":2,
-      "codecName":"aom1",
+      "codecName":"av1",
       "AEAD":"NULL",
       "width":240,
       "height":240,
@@ -828,7 +828,7 @@ streams with different encodingID.
       "sourceType":"video",
       "codecs":[
         {
-          "codecName":"aom1",
+          "codecName":"av1",
           "maxBitrate":20000000,
           "maxWidth":3840,
           "maxHeight":2160,
@@ -861,7 +861,7 @@ streams with different encodingID.
       "endpointID":0,
       "sourceID":0,
       "encodingID":1,
-      "codecName":"aom1",
+      "codecName":"av1",
       "AEAD":"NULL",
       "width":640,
       "height":480,
