@@ -317,8 +317,10 @@ the packets. This is created by the endpoint sending the message.
   middle if it was uncertain. This allows an media switch to select
   the active speaker in the in a conference call.
 
-* Room location: get left right screens correct for video and allow
-  for spatial audio
+* Location in room: relative location in room enumerated starting at
+  front left and moving around clockwise. This helps get the correct
+  content on left and right screens for video and helps with for
+  spatial audio
 
 * Reference Frame : bool to indicate if this message is part of a
   reference frame
@@ -326,7 +328,7 @@ the packets. This is created by the endpoint sending the message.
 * DSCP : DSCP to use on transmissions of this message and future
   messages on this GlobalEncodingID
 
-* Layer ID : Indication which layer is for scalable video codecs. SFU
+* Layer ID : Integer indicating which layer is for scalable video codecs. SFU
   may use this to selectively drop a frame.
 
 The keys used for the AEAD are unique to a given conference ID and
@@ -354,9 +356,6 @@ contains:
 * and sequence ID headers 
 
 but they are not needed in every packet. 
-
-If none of these are available, then the GlobalEncodingID must be
-included.
 
 The sequence ID or GlobalMessageID is required in every message and
 periodically there should be message with the capture time.
@@ -428,28 +427,6 @@ stream. All media flow are only in one direction. The control is
 broken into control of connectivity and transports, and control of
 media streams.
 
-## Media Capabilities API
-
-Send and receive codecs are consider separate codecs and can have
-separate capabilities though the default to the same if not specified separately. 
-
-For each send or receive audio codec, an API to learn:
-
-* codec name 
-* the max sample rate
-* the max sample size 
-* the max bitrate
-
-For each send or receive video codec, an API to learn:
-
-* codec name 
-* the max width
-* the max height
-* the max frame rate 
-* the max pixel  depth 
-* the max bitrate
-* the max pixel rate ( pixels / second )
-
 ## Transport Capabilities API
 
 
@@ -460,9 +437,31 @@ An API to get information for remote connectivity including:
 server
 * gather local IP, port, protocol tuples for receiving media
 * report SHA256 fingerprint of local TLS certificate
-
+* encryption algorithms supported 
 * report an error for a bad TURN2 credential 
 
+
+## Media Capabilities API 
+
+Send and receive codecs are consider separate codecs and can have 
+separate capabilities though the default to the same if not specified separately. 
+
+For each send or receive audio codec, an API to learn: 
+
+* codec name 
+* the max sample rate 
+* the max sample size 
+* the max bitrate 
+
+For each send or receive video codec, an API to learn: 
+
+* codec name 
+* the max width 
+* the max height 
+* the max frame rate 
+* the max pixel  depth 
+* the max bitrate 
+* the max pixel rate ( pixels / second ) 
 
 ## Transport Configuration API
 
@@ -471,6 +470,7 @@ To create a new flow, the information that can be configured is:
 
 * turn server to use 
 * list of IP, Port, Protocol tuples to try connecting to
+* encryption algorithm to use 
 * TLS fingerprint of far side 
 
 An api to allow modification of the follow attributes of a flow:
