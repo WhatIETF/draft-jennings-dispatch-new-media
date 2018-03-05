@@ -2,7 +2,7 @@
     title = "New Media Stack"
     abbrev = "new-media"
     category = "std"
-    docName = "draft-jennings-dispatch-new-media"
+    docName = "draft-jennings-dispatch-new-media-00"
     ipr = "trust200902"
 
     [pi]
@@ -335,7 +335,7 @@ endpoint ID.
 If the message has any of the following headers, they must occur in
 the following order followed by all other headers:
 
-1.  GlobalEncodingID,
+1. GlobalEncodingID,
 2. GlobalMessageID,
 3. conference ID,
 4. endpoint ID,
