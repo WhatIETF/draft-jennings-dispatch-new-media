@@ -2,7 +2,7 @@
     title = "New Media Stack"
     abbrev = "new-media"
     category = "std"
-    docName = "draft-jennings-dispatch-new-media-00"
+    docName = "draft-jennings-dispatch-new-media-01"
     ipr = "trust200902"
 
     [pi]
@@ -96,6 +96,35 @@ cannot change any part of it.
   any integer values are coded as variable length integers similar to
   how this is done in CBOR.
 
+# Architecture
+
+
+TODO Show three clients, SFU, controller
+
+TODO Simplified version 2 clients, TURN,  controller , now SFU
+
+
+# Goals
+
+* Better connectivity
+
+* Design for SFU ( Switch Forwarding Units)
+
+* Designed for client serverr with server based controll of clients
+
+* Faster setup
+
+* Plugable congestion controll
+
+* much much simpler
+
+* end to end security
+
+* remove ability to use STUN / TURN in DDOS reflection attacks
+
+* ability for receiver of video to tell the sender about size changes
+  of display window such that the sender can match 
+
 
 # Connectivity Layer
 
@@ -124,9 +153,14 @@ the controller to use machine learning, past history, and heuristics to
 find an optimal connection much faster than something like ICE.
 
 The details of this approach are described in
-[@I-D.jennings-dispatch-snowflake].
+[@I-D.jennings-dispatch-snowflake]. Many of ideas in this can be
+traced back to [@I-D.kaufman-rtcweb-traversal].
 
 ## STUN2
+
+TODO: separate consent issues and find IP address issues
+
+TODO: make STUN2 run over QUIC 
 
 The speed of setting up a new media flow is often determined by how
 many STUN2 checks need to be done. If the STUN2 packets are smaller,
@@ -147,7 +181,7 @@ A STUN2 request consists of the following TLVs:
 
 * an optional sender secret that can be used by the receiver to prove
   that it received the request. In WebRTC the browser would create the
-  secret but the JavaScript on the sending side would know the value.
+  secret but the JavaScript on the sending side would not know the value.
 
 The packet is encrypted by using the secret and an AEAD crypto to
 create a STUN2 packet where the first two fields are the magic number
@@ -175,6 +209,8 @@ rest of the fields that are authenticated and encrypted followed by
 the AEAD authentication data.
 
 ## TURN2 
+
+TODO: make TURN2 run over QUIC 
 
 Out of band, the client tells the TURN2 server the fingerprint of the
 cert it uses to authenticate with and the TURN2 server gives the client
@@ -236,8 +272,10 @@ crypto layer equivalent to DTLS and they must ensure adequate
 congestion control. The transport layer brings up a flow between two
 computers. This flow can be used by multiple media streams. 
 
-The MTI transport layer is QUIC with packets sent in an unreliable
-mode.
+The MTI transport layer is QUIC with packets. It assumes that QUIC
+has a way to deliverr the packets in an effecent unreliable
+mode as wells as an optiona way to deliver important metadata packets
+in a relieable mode. 
  
 This is secured by checking the fingerprints of the DTLS connection
 match the fingerprints provided at the control layer or by checking
@@ -281,10 +319,16 @@ what to do with the media. The TLV header are the follow:
 
 * Sink ID: integer to uniquely identify the sink within the scope a
   endpoint ID. A sink could be a speaker or screen. This is set by the
-  endpoint and included in the advertisement.
+  endpoint and included in the advertisement. An endpoint sending
+  media can have this set. If it is set it should transmit it for 3
+  frames any time it changes and once every 5 second. An SFU can add,
+  modify, or delete this from any media packet.  TODO - How to use
+  this for SFU controlled layout - for example, if have 100 users in
+  conference and want to put the 10 most recent speakers in
+  thumbnails. Do we need this at all ?
 
 * Encoding ID: integer to uniquely identify the encoding of the stream
-  within the scope of the stream ID. Note there may be multiple
+  within the scope of the source ID. Note there may be multiple
   encodings of data from the same source. This is set by the proposal.
 
 * Salt : salt to use for forming the initialization vector for
@@ -293,7 +337,7 @@ what to do with the media. The TLV header are the follow:
 the packets. This is created by the endpoint sending the message.  
 
 * GlobalEncodingID: 64 bit hash of concatenation of conference ID,
-  endpoint ID, stream ID, encoding ID
+  endpoint ID, source ID, encoding ID
 
 * Capture time: Time when the first sample in the message was
   captured. It is a NTP time in ms with the high order bits
@@ -310,20 +354,22 @@ the packets. This is created by the endpoint sending the message.
 * GlobalMessageID: 64 bit hash of concatenation of conference ID,
   endpoint ID, encoding ID, sequence ID
 
-* Active level: this is a number from 0 to 100 indicates the level
+* Active level: this is a number from 0 to 100 indicates the probability
   that the sender of this media wishes it to be considered active
   media. For example if it was voice, it would be 100 if the person
   was clearly speaking, and 0 if not, and perhaps a value in the
   middle if it was uncertain. This allows an media switch to select
   the active speaker in the in a conference call.
 
-* Location in room: relative location in room enumerated starting at
-  front left and moving around clockwise. This helps get the correct
-  content on left and right screens for video and helps with for
-  spatial audio
+* Location: relative or absolute location, direction of view, and
+  field view. With video coming from drones, 360 cameras, VR light
+  field cameras, and comrpex video conferncing rooms, this provides
+  the information about the camera or micrphone that the receiver can
+  use to render the correct view. This is end to end encrypted.
 
 * Reference Frame : bool to indicate if this message is part of a
-  reference frame
+  reference frame. Typically, a SFU will switch to the new video
+  stream at the start of a reference frame.
 
 * DSCP : DSCP to use on transmissions of this message and future
   messages on this GlobalEncodingID
@@ -360,6 +406,28 @@ but they are not needed in every packet.
 The sequence ID or GlobalMessageID is required in every message and
 periodically there should be message with the capture time.
 
+## RTP Meta Data
+
+We tend to end up with a few categories of data associated with the
+media:
+
+* Stuff you need at the same time you get the media. For example, this
+is a reference frame.
+
+* Stuff you need soon but not instantly. For example the name of the
+speaker in a given rectangle of a video stream
+
+And it tends to change at different rates:
+
+* Stuff that you need to process the media and may change but does not
+change quickly and you don't need it with every frame.  For example,
+salt for encryption
+
+* Stuff that you need to join the media but may never change. For
+example, resolution of the video is 
+
+TODO - think about how to optimize design for each type of meta data
+
 
 ## Securing the messages
 
@@ -386,6 +454,9 @@ like media by selecting an appropriate codec and a software based
 source or sink. An additional parameter to the codec can indicate if
 reliably delivery is needed and if in order delivery is needed.
 
+## Media Keep Alive
+
+Provided by transport. 
 
 ## Forward Error Correction
 
@@ -395,12 +466,30 @@ messages needs to be defined.
 
 ## MTI Codecs
 
-Implementation MUST support at least G711, Opus, H.264 and AV1
 
+### Audio
+
+Implementation MUST support at least G711 and Opus
+
+### Video 
+
+Implementation MUST support at least H.264 and AV1
+ 
 Video codecs use square pixels.
 
 Video codecs MUST support any aspect ratio within the limits of their
 max width and height.
+
+Video codecs can specify a maximum pixel rate, maximum frame rate,
+maximum images size. The can also specify a list of binary flags of
+supported features which are defined by the codec and may be supported
+by the codec for encode, decode, or neither where each feature can be
+independently controlled. They can not impose constraints beyond
+that. Some existing codecs like vp8 may easily fit into that while
+some codec like H264 may need some suspects defined as new codecs to
+meet the requirements for this. It is not expected that all the
+nuances that could be negotiated with SDP for 264 would be supported
+in this new media. 
 
 Video codecs MUST support a min width and min height of 1. 
 
@@ -410,6 +499,43 @@ frame is up and first pixel in the scan line is on the left.
 T.38 fax and DTMF are not supported. Fax can be sent as a TIFF imager
 over a data channel and DTFM can be done as an application specific
 information over a data channel.
+
+### Annotation 
+
+Optional support for annotation based overlay using vector graphics
+such as a subset of SVG.
+
+### Application Data Channels
+
+Need support for application defined data in both a reliable and
+unreliable datagram mode. 
+
+### Reverse Requests & Stats
+
+The hope is that this is not needed.
+
+Much of what goes in the reverse direction of the media in RTCP is
+either used for congestion controll, diagnostics, or controll of the
+codec such as requesting to resent a frame or sending a new intra
+codec frame for video. The design reduces the need for this.
+
+The congestion controll information which is needed quickly is all
+handled at QUIC layer.
+
+The diagnostic type information can be reported
+from the endpint to the controller and does not need to flow at the
+media level.
+
+Information that needs to be delivered reliably can be
+sent that way at the QUIC level remove the need for retransmit type
+request. System that use selective retransmission to recover from
+packet loss of media do not tend to work as well for interactive
+medias as forward error correction schemes because of the large
+latency they introduce.
+
+Information like requesting a new intra codec frame for video often
+needs to come from the controller and can be sent over the signaling
+and controll layer.
 
 ## Message Key Agreement
 
@@ -503,6 +629,7 @@ For each transmitted audio steam, a way to set the:
 * process as one of : automatically set, raw, speech, music
 * DSCP value to use
 * flag to indicating to use constant bit rate
+* optionally set a sinkID to periodically include in the media 
 
 
 For each transmitted video stream, a way to set
@@ -516,7 +643,8 @@ For each transmitted video stream, a way to set
 * sample size
 * process as one of :  automatically set, rapidly changing video, fine detail video 
 * DSCP value to use
-* for layered codec, a layer ID and set of layers IDs this depends on 
+* for layered codec, a layer ID and set of layers IDs this depends on
+* optionally set a sinkID to periodically include in the media 
 
 For each transmitted video stream, a way to tell it to:
 
@@ -579,7 +707,7 @@ For video streams (send & receive):
 * current encoded width and height
 * current encoded frame rate
 
-# Call Signaling 
+# Call Signaling - JABBER2 
 
 Call signaling is out of scope for usages like WebRTC but other 
 usages may want a common REST API they can use.
@@ -893,3 +1021,28 @@ out which endpoints are the active speaker and forward only those. The
 SFU never changes anything in the message. 
 
 
+
+# Acknowledgements
+
+Thank you to great input from
+Matthew Kaufman,
+Espen Berger,
+Malcolm Walters
+Patrick Linskey
+
+# Other Work
+
+rfc7016
+
+draft-kaufman-rtcweb-traversal
+
+
+# Style of specification
+
+The proposal is to have a high level overview document where we
+document some of the design - this document could be a start of
+that. Then write a a spec for each on of the separable protocol parts
+such as STUN2, TURN2, etc. The protocol would contain a high level
+overview like you might find on a wikipedia page and the details of
+the protocol encoding would be provided in an open source reference
+implementation. 
