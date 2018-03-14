@@ -28,12 +28,12 @@ communications.
 
 {mainmatter}
 
+# Introduction
+
 
 TODO - should name be extensible or modular not simple
 
-# Introduction
-
-This draft proposes a new media stack to replace the existing stack
+ This draft proposes a new media stack to replace the existing stack
 RTP, DTLS-SRTP, and SDP Offer Answer.  The key parts of this stack are
 connectivity layer, the transport layer, the media layer, a control
 API, and the signaling layer.
@@ -1062,11 +1062,11 @@ draft-kaufman-rtcweb-traversal
 
 Consider using terminology from rfc7656
 
-https://docs.google.com/presentation/d/1Sg_1TVCcKJvZ8Egz5oa0CP01TC2rNdv9HVu7W38Y4zA/edit#slide=id.g29a8672e18_22_120
+docs.google.com/presentation/d/1Sg\_1TVCcKJvZ8Egz5oa0CP01TC2rNdv9HVu7W38Y4zA/edit#slide=id.g29a8672e18\_22\_120
 
-https://docs.google.com/presentation/d/1o-o5jZBLw3Py1OuenzWDkxDG6NigSmLHvGw5KemKWLw/edit#slide=id.g2f8f4acff1_1_249
+docs.google.com/presentation/d/1o-o5jZBLw3Py1OuenzWDkxDG6NigSmLHvGw5KemKWLw/edit#slide=id.g2f8f4acff1\_1\_249
 
-https://cs.chromium.org/chromium/src/third_party/webrtc/common_video/include/video_frame.h?type=cs&q=EncodedImage&sq=package:chromium&l=28
+cs.chromium.org/chromium/src/third\_party/webrtc/common\_video/include/video_frame.h
 
 
 # Style of specification
