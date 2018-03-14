@@ -29,6 +29,8 @@ communications.
 {mainmatter}
 
 
+TODO - should name be extensible or modular not simple
+
 # Introduction
 
 This draft proposes a new media stack to replace the existing stack
@@ -125,6 +127,13 @@ TODO Simplified version 2 clients, TURN,  controller , now SFU
 * ability for receiver of video to tell the sender about size changes
   of display window such that the sender can match 
 
+* Eliminiate the problems with ROC in SRTP
+
+* address reasons people have not used from SDES to DTLS-SRTP
+
+* seperation of call setup and ongoing call / conference control
+
+* make codec negotiation more generic so that it works for future codecs 
 
 # Connectivity Layer
 
@@ -499,6 +508,21 @@ frame is up and first pixel in the scan line is on the left.
 T.38 fax and DTMF are not supported. Fax can be sent as a TIFF imager
 over a data channel and DTFM can be done as an application specific
 information over a data channel.
+
+TODO: Capture the list of what metadata video encoders produce
+* if it is a reference frame or not
+* resolution
+* frame-rate ?
+* capture time of frame 
+
+TODO: Capture the list of what metadata video encoders needs.
+* capture timestamp
+* source and target resolution
+* source and target frame-rate
+* target bitrate
+* max bitrate
+* max pixel rate
+
 
 ### Annotation 
 
@@ -1035,6 +1059,14 @@ Patrick Linskey
 rfc7016
 
 draft-kaufman-rtcweb-traversal
+
+Consider using terminology from rfc7656
+
+https://docs.google.com/presentation/d/1Sg_1TVCcKJvZ8Egz5oa0CP01TC2rNdv9HVu7W38Y4zA/edit#slide=id.g29a8672e18_22_120
+
+https://docs.google.com/presentation/d/1o-o5jZBLw3Py1OuenzWDkxDG6NigSmLHvGw5KemKWLw/edit#slide=id.g2f8f4acff1_1_249
+
+https://cs.chromium.org/chromium/src/third_party/webrtc/common_video/include/video_frame.h?type=cs&q=EncodedImage&sq=package:chromium&l=28
 
 
 # Style of specification
