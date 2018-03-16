@@ -283,8 +283,12 @@ computers. This flow can be used by multiple media streams.
 
 The MTI transport layer is QUIC with packets. It assumes that QUIC
 has a way to deliverr the packets in an effecent unreliable
-mode as wells as an optiona way to deliver important metadata packets
-in a relieable mode. 
+mode as wells as an optional way to deliver important metadata packets
+in a relieable mode. It assumes that QUIC can report up to the rate
+adaptation layer a current max target bandwidth that QUIC can
+transmit at. It's possible these are all unrealstic charactersitcs of
+QUIC in which case a new transport protcol shoudl be developed that
+provides these and is layered on top of DTLS for security. 
  
 This is secured by checking the fingerprints of the DTLS connection
 match the fingerprints provided at the control layer or by checking
@@ -1044,15 +1048,22 @@ GlobalEncodingID. By looking at the "active level", the SFU can figure
 out which endpoints are the active speaker and forward only those. The 
 SFU never changes anything in the message. 
 
+## Software Defined Networking
+
+## Vector Packet Processors
+
+## Information Centric Networking
+
 
 
 # Acknowledgements
 
-Thank you to great input from
+Thank you for great input from
 Matthew Kaufman,
 Espen Berger,
 Malcolm Walters
 Patrick Linskey
+Eric Rescorla
 
 # Other Work
 
