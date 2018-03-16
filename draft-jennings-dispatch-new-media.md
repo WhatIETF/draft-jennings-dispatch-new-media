@@ -1,5 +1,5 @@
 %%%
-    title = "New Media Stack"
+    title = "Modular Media Stack"
     abbrev = "new-media"
     category = "std"
     docName = "draft-jennings-dispatch-new-media-01"
@@ -23,17 +23,56 @@
 
 .# Abstract
 
-A sketch of a proposal for a new media stack for interactive
+A sketch of a proposal for a modular media stack for interactive
 communications.
 
 {mainmatter}
 
 # Introduction
 
+This draft is an accumulation of varios ideas some people are thinking
+about. Most of them are farily serparable and could be morephed into
+existing protocols though this draft takes a blank sheet of paper
+aproach to considering what would be the best think if we were
+starting from scratch. With that is place, it is possible to ask which
+of theses ideas makes sense to back patch into existing protocols.
 
-TODO - should name be extensible or modular not simple
+# Goals 
 
- This draft proposes a new media stack to replace the existing stack
+* Better connectivity by enable sitituation where asymetric media is
+  possible. 
+
+* Design for SFU ( Switch Forwarding Units) 
+
+* Designed for client serverr with server based controll of clients 
+
+* Faster setup 
+
+* Plugable congestion controll 
+
+* much much simpler 
+
+* end to end security 
+
+* remove ability to use STUN / TURN in DDOS reflection attacks 
+
+* ability for receiver of video to tell the sender about size changes 
+  of display window such that the sender can match 
+
+* Eliminiate the problems with ROC in SRTP 
+
+* address reasons people have not used from SDES to DTLS-SRTP 
+
+* seperation of call setup and ongoing call / conference control 
+
+* make codec negotiation more generic so that it works for future codecs 
+
+* remove ICE's need for global pacing which is more or less imposible on
+  general purpoose devices like PCs 
+
+# Overview
+
+This draft proposes a new media stack to replace the existing stack
 RTP, DTLS-SRTP, and SDP Offer Answer.  The key parts of this stack are
 connectivity layer, the transport layer, the media layer, a control
 API, and the signaling layer.
@@ -100,40 +139,22 @@ cannot change any part of it.
 
 # Architecture
 
+Much of the devployments arcatecure of IETF media designs are based on
+a distributed controller for the media stack that is running peer to
+peer in each cleint. Nearly all deployments, by they a cloud based
+conferncing systems or an enterprise PBX, use a central controller
+that acts as an SBC to try and controll each client. The goal here
+would be an depoyment acetecture that
 
-TODO Show three clients, SFU, controller
+* support a single controller that controlled all the device in a
+  given conerence or call. The controller could be in the cloud or
+  running on one of the endpoints.
 
-TODO Simplified version 2 clients, TURN,  controller , now SFU
+* deisgn for multy party confernce calls first and treat 2 party calls
+  as a specialed sub case of that 
 
-
-# Goals
-
-* Better connectivity
-
-* Design for SFU ( Switch Forwarding Units)
-
-* Designed for client serverr with server based controll of clients
-
-* Faster setup
-
-* Plugable congestion controll
-
-* much much simpler
-
-* end to end security
-
-* remove ability to use STUN / TURN in DDOS reflection attacks
-
-* ability for receiver of video to tell the sender about size changes
-  of display window such that the sender can match 
-
-* Eliminiate the problems with ROC in SRTP
-
-* address reasons people have not used from SDES to DTLS-SRTP
-
-* seperation of call setup and ongoing call / conference control
-
-* make codec negotiation more generic so that it works for future codecs 
+* design with the asumption that an ligth weight SFU (Switched
+Forwarding Unit) was used to distribute media for confernce calls.
 
 # Connectivity Layer
 
@@ -167,55 +188,27 @@ traced back to [@I-D.kaufman-rtcweb-traversal].
 
 ## STUN2
 
-TODO: separate consent issues and find IP address issues
-
-TODO: make STUN2 run over QUIC 
-
 The speed of setting up a new media flow is often determined by how
 many STUN2 checks need to be done. If the STUN2 packets are smaller,
 then the stun checks can be done faster without risk of causing
-congestion. The STUN2 server and client share a secret that they use
-for authentication and encryption. When talking to a public STUN2
-server this secret is the empty string.
+congestion. 
 
 ### STUN2 Request
 
-A STUN2 request consists of the following TLVs:
-
-* a magic number that uniquely identifies this as a STUN2 request
-  packet with minimal risk of collision when multiplexing.
-
-* a transaction ID that uniquely identifies this request and does not
-  change in retransmissions of the same request.
-
-* an optional sender secret that can be used by the receiver to prove
-  that it received the request. In WebRTC the browser would create the
-  secret but the JavaScript on the sending side would not know the value.
-
-The packet is encrypted by using the secret and an AEAD crypto to
-create a STUN2 packet where the first two fields are the magic number
-and transaction ID which are only authenticated followed by the rest
-of the fields that are authenticated and encrypted followed by the
-AEAD authentication data.
-
-The STUN2 requests are transmitted with the same retransmission and
-congestion algorithms as STUN2 in WebRTC 1.0
+A STUN2 request consists of, well, really nothing. The STUN client
+just opens a QUIC connection to the STUN server. 
 
 ### STUN2 Response
 
-A STUN2 response consists of the following TLVs:
+When the STUN2 sever receives a new QUIC connection, it resoonds wiht
+the IP address and port that the connection came from. 
 
-* a magic number that uniquely identifies this as a STUN2 response
-  packet with minimal risk of collision when multiplexing.
+The client can check it is talking to the correct STUN server by
+checking the fingerprint of the certificate. Protocols like ICE would
+need to exchange theses fingerprints instead of all the crazy stun
+attributes.
 
-* the transaction ID from the request.
-
-* the IP address and port the request was received from.
-
-The packet is encrypted where the first two fields are the magic
-number and transaction ID which are only authenticated followed by the
-rest of the fields that are authenticated and encrypted followed by
-the AEAD authentication data.
+Thanks to Peter Thacher for proposing STUN over QUIC.
 
 ## TURN2 
 
@@ -306,7 +299,12 @@ and added back on the receiving side.
 
 The transport need to be able to ensure that it has a very small
 chance of being confused with the STUN2 traffic it will be multiplexed
-with.
+with. (Open issue - if the STUN2 runs on top of same transport, this
+becomes less of issue )
+
+The transport crypto needs to be able to export server state
+that can be passed out of band to the client to enable the client to
+make a zero RTT connection to the server. 
 
 
 # Media Layer - RTP3
@@ -1058,12 +1056,14 @@ SFU never changes anything in the message.
 
 # Acknowledgements
 
-Thank you for great input from
-Matthew Kaufman,
+Thank you for input from:
+Harald Alvestrand,
 Espen Berger,
+Matthew Kaufman,
+Patrick Linskey,
+Eric Rescorla,
+Peter Thacher,
 Malcolm Walters
-Patrick Linskey
-Eric Rescorla
 
 # Other Work
 
@@ -1082,7 +1082,7 @@ cs.chromium.org/chromium/src/third\_party/webrtc/common\_video/include/video_fra
 
 # Style of specification
 
-The proposal is to have a high level overview document where we
+Fundemntall driven by experiments. The proposal is to have a high level overview document where we
 document some of the design - this document could be a start of
 that. Then write a a spec for each on of the separable protocol parts
 such as STUN2, TURN2, etc. The protocol would contain a high level
