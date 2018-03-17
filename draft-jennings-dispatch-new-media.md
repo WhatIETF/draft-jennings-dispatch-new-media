@@ -31,24 +31,24 @@ communications.
 # Introduction
 
 This draft is an accumulation of varios ideas some people are thinking
-about. Most of them are farily serparable and could be morephed into
+about. Most of them are fairly separable and could be morphed into
 existing protocols though this draft takes a blank sheet of paper
-aproach to considering what would be the best think if we were
+approach to considering what would be the best think if we were
 starting from scratch. With that is place, it is possible to ask which
 of theses ideas makes sense to back patch into existing protocols.
 
 # Goals 
 
-* Better connectivity by enable sitituation where asymetric media is
+* Better connectivity by enable situation where asymmetric media is
   possible. 
 
 * Design for SFU ( Switch Forwarding Units) 
 
-* Designed for client serverr with server based controll of clients 
+* Designed for client servers with server based controll of clients 
 
 * Faster setup 
 
-* Plugable congestion controll 
+* Pluggable congestion controll 
 
 * much much simpler 
 
@@ -68,14 +68,14 @@ of theses ideas makes sense to back patch into existing protocols.
 * make codec negotiation more generic so that it works for future codecs 
 
 * remove ICE's need for global pacing which is more or less imposible on
-  general purpoose devices like PCs 
+  general purpose devices like PCs 
 
 # Overview
 
 This draft proposes a new media stack to replace the existing stack
 RTP, DTLS-SRTP, and SDP Offer Answer.  The key parts of this stack are
 connectivity layer, the transport layer, the media layer, a control
-API, and the signaling layer.
+API, and the singling layer.
 
 The connectivity layer uses a simplified version of ICE, called
 snowflake [@I-D.jennings-dispatch-snowflake], to find connectivity
@@ -99,7 +99,7 @@ application tell the media stack how it should be
 configured. Configuration includes what codec to use, size and frame
 rate of video, and where to send the media.
 
-The signaling layer is based on an advertisement and proposal
+The singling layer is based on an advertisement and proposal
 model. Each endpoint can create an advertisement that describes what
 it supports including things like supported codecs and maximum
 bitrates. A proposal can be sent to an endpoint that tells the
@@ -139,22 +139,22 @@ cannot change any part of it.
 
 # Architecture
 
-Much of the devployments arcatecure of IETF media designs are based on
+Much of the deployments architecture of IETF media designs are based on
 a distributed controller for the media stack that is running peer to
-peer in each cleint. Nearly all deployments, by they a cloud based
-conferncing systems or an enterprise PBX, use a central controller
+peer in each client. Nearly all deployments, by they a cloud based
+conferencing systems or an enterprise PBX, use a central controller
 that acts as an SBC to try and controll each client. The goal here
-would be an depoyment acetecture that
+would be an deployment architecture that
 
 * support a single controller that controlled all the device in a
-  given conerence or call. The controller could be in the cloud or
+  given conference or call. The controller could be in the cloud or
   running on one of the endpoints.
 
-* deisgn for multy party confernce calls first and treat 2 party calls
+* design for multi party conference calls first and treat 2 party calls
   as a specialed sub case of that 
 
-* design with the asumption that an ligth weight SFU (Switched
-Forwarding Unit) was used to distribute media for confernce calls.
+* design with the assumption that an light weight SFU (Switched
+Forwarding Unit) was used to distribute media for conference calls.
 
 # Connectivity Layer
 
@@ -200,7 +200,7 @@ just opens a QUIC connection to the STUN server.
 
 ### STUN2 Response
 
-When the STUN2 sever receives a new QUIC connection, it resoonds wiht
+When the STUN2 sever receives a new QUIC connection, it responds with
 the IP address and port that the connection came from. 
 
 The client can check it is talking to the correct STUN server by
@@ -208,7 +208,7 @@ checking the fingerprint of the certificate. Protocols like ICE would
 need to exchange theses fingerprints instead of all the crazy stun
 attributes.
 
-Thanks to Peter Thacher for proposing STUN over QUIC.
+Thanks to Peter Thatcher for proposing STUN over QUIC.
 
 ## TURN2 
 
@@ -275,12 +275,12 @@ congestion control. The transport layer brings up a flow between two
 computers. This flow can be used by multiple media streams. 
 
 The MTI transport layer is QUIC with packets. It assumes that QUIC
-has a way to deliverr the packets in an effecent unreliable
+has a way to delivers the packets in an effecent unreliable
 mode as wells as an optional way to deliver important metadata packets
-in a relieable mode. It assumes that QUIC can report up to the rate
+in a reliable mode. It assumes that QUIC can report up to the rate
 adaptation layer a current max target bandwidth that QUIC can
-transmit at. It's possible these are all unrealstic charactersitcs of
-QUIC in which case a new transport protcol shoudl be developed that
+transmit at. It's possible these are all unrealistic characteristics of
+QUIC in which case a new transport protocol should be developed that
 provides these and is layered on top of DTLS for security. 
  
 This is secured by checking the fingerprints of the DTLS connection
@@ -317,7 +317,7 @@ There are several message headers that help the receiver understand
 what to do with the media. The TLV header are the follow:
 
 * Conference ID: Integer that will be globally unique identifier for
-  the for all applications using a common call signaling system. This
+  the for all applications using a common call singling system. This
   is set by the proposal.
 
 * Endpoint ID: Integer to uniquely identify the endpoint with within
@@ -374,8 +374,8 @@ the packets. This is created by the endpoint sending the message.
 
 * Location: relative or absolute location, direction of view, and
   field view. With video coming from drones, 360 cameras, VR light
-  field cameras, and comrpex video conferncing rooms, this provides
-  the information about the camera or micrphone that the receiver can
+  field cameras, and complex video conferencing rooms, this provides
+  the information about the camera or microphone that the receiver can
   use to render the correct view. This is end to end encrypted.
 
 * Reference Frame : bool to indicate if this message is part of a
@@ -560,7 +560,7 @@ medias as forward error correction schemes because of the large
 latency they introduce.
 
 Information like requesting a new intra codec frame for video often
-needs to come from the controller and can be sent over the signaling
+needs to come from the controller and can be sent over the signalling
 and controll layer.
 
 ## Message Key Agreement
@@ -733,12 +733,12 @@ For video streams (send & receive):
 * current encoded width and height
 * current encoded frame rate
 
-# Call Signaling - JABBER2 
+# Call Signalling - JABBER2 
 
-Call signaling is out of scope for usages like WebRTC but other 
+Call signalling is out of scope for usages like WebRTC but other 
 usages may want a common REST API they can use.
 
-Call signaling works be having the client connect to a server when it
+Call signalling works be having the client connect to a server when it
 starts up and send its current advertisement and open a web socket or
 to receive proposals from the server. A client can make a rest call
 indicating the parties(s) it wishes to connect to and the server will
@@ -746,17 +746,17 @@ then send proposals to all clients that connect them. The proposal
 tell each client exactly how to configure it's media stack and MUST
 be either completely accepted, or completely rejected.
 
-The signaling is based on the the advertisement proposal ideas from
+The signalling is based on the the advertisement proposal ideas from
 [@I-D.peterson-sipcore-advprop].
 
-We define one round trip of signaling to be a message going from a
+We define one round trip of signalling to be a message going from a
 client up to a server in the cloud, then down to another client which
 returns a response along the reverse path. With this definition SIP is
 takes 1.5 round trips or more if TURN is needed to set up a call while
 this takes 0.5 round trips.
 
 
-# Signaling Examples
+# Signalling Examples
 
 ## Simple Audio Example
 
@@ -1062,7 +1062,7 @@ Espen Berger,
 Matthew Kaufman,
 Patrick Linskey,
 Eric Rescorla,
-Peter Thacher,
+Peter Thatcher,
 Malcolm Walters
 Martin Thomson 
 
@@ -1083,7 +1083,7 @@ cs.chromium.org/chromium/src/third\_party/webrtc/common\_video/include/video_fra
 
 # Style of specification
 
-Fundemntall driven by experiments. The proposal is to have a high level overview document where we
+Fundamental driven by experiments. The proposal is to have a high level overview document where we
 document some of the design - this document could be a start of
 that. Then write a a spec for each on of the separable protocol parts
 such as STUN2, TURN2, etc.
@@ -1091,9 +1091,9 @@ such as STUN2, TURN2, etc.
 The protocol specs would contain a high level
 overview like you might find on a wikipedia page and the details of
 the protocol encoding would be provided in an open source reference
-implementation. The test code for the refernces implemetation helps
-test the spec. The implemenation is not optimized for perfromance but
-instead is simply trying to clearly illistrate the procol. Particular
+implementation. The test code for the references implementation helps
+test the spec. The implementation is not optimized for perfromance but
+instead is simply trying to clearly illustrate the protocol. Particular
 version of the draft would be bound to a tagged version of the source
-code. All the source code would be under noraml IETF IPR rules just
-like it was included direclty in the draft. 
+code. All the source code would be under normal IETF IPR rules just
+like it was included directly in the draft. 
