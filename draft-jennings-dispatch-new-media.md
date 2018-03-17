@@ -215,7 +215,7 @@ Thanks to Peter Thacher for proposing STUN over QUIC.
 TODO: make TURN2 run over QUIC 
 
 Out of band, the client tells the TURN2 server the fingerprint of the
-cert it uses to authenticate with and the TURN2 server gives the client
+cert it uses to authenticate with. The TURN2 server gives the client
 two public IP:port address pairs. One is called inbound and other
 called outbound. The client connects to the outbound port and
 authenticates to TURN2 server using the TLS domain name of server. The
@@ -1064,6 +1064,7 @@ Patrick Linskey,
 Eric Rescorla,
 Peter Thacher,
 Malcolm Walters
+Martin Thomson 
 
 # Other Work
 
@@ -1085,7 +1086,14 @@ cs.chromium.org/chromium/src/third\_party/webrtc/common\_video/include/video_fra
 Fundemntall driven by experiments. The proposal is to have a high level overview document where we
 document some of the design - this document could be a start of
 that. Then write a a spec for each on of the separable protocol parts
-such as STUN2, TURN2, etc. The protocol would contain a high level
+such as STUN2, TURN2, etc.
+
+The protocol specs would contain a high level
 overview like you might find on a wikipedia page and the details of
 the protocol encoding would be provided in an open source reference
-implementation. 
+implementation. The test code for the refernces implemetation helps
+test the spec. The implemenation is not optimized for perfromance but
+instead is simply trying to clearly illistrate the procol. Particular
+version of the draft would be bound to a tagged version of the source
+code. All the source code would be under noraml IETF IPR rules just
+like it was included direclty in the draft. 
