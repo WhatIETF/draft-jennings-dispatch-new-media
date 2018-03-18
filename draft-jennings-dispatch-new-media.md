@@ -42,7 +42,9 @@ of theses ideas makes sense to back patch into existing protocols.
 * Better connectivity by enable situation where asymmetric media is
   possible. 
 
-* Design for SFU ( Switch Forwarding Units) 
+* Design for SFU ( Switch Forwarding Units). Design for multiparty
+  calls first then consider two party calls as a specialized subcase
+  of that. 
 
 * Designed for client servers with server based controll of clients 
 
@@ -1048,10 +1050,19 @@ SFU never changes anything in the message.
 
 ## Software Defined Networking
 
+Is it possible to use the packet recycling concepts in SDN to forward
+a single packet to multiple endpoints? Can the way SDN forwarding
+would work be adapted to use a SDN router as a SFU?
+
+
 ## Vector Packet Processors
+
+Can we use fast VPP systems like fd.io to create a SFU?
 
 ## Information Centric Networking
 
+What changes would be needed to map RTP2 into the prefix and suffix of
+hICN?
 
 
 # Acknowledgements
