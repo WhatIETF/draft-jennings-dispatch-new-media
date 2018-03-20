@@ -446,11 +446,11 @@ TODO - think about how to optimize design for each type of meta data
 
 The whole message is end to end secured with AEAD. The headers are
 authenticated while the payload data is authenticated and
-encrypted. Similar to how the IV for AES-GCM is calculated in SRTP, in
-this case the IV is computed by xor'ing the salt with the
-concatenation of the GlobalEncodingID and low 64 bits of sequence
-ID. The message consists of the authenticated data, followed by the
-encrypted data , then the authentication tag.
+encrypted.
+AERO [@!I-D.mcgrew-aero]  is used to with AES-GCM.
+
+TODO - Should the authentication tag be truncated to some value?
+
 
 ## Sender requests
 
@@ -749,7 +749,7 @@ tell each client exactly how to configure it's media stack and MUST
 be either completely accepted, or completely rejected.
 
 The signalling is based on the the advertisement proposal ideas from
-[@I-D.peterson-sipcore-advprop].
+[@!I-D.peterson-sipcore-advprop].
 
 We define one round trip of signalling to be a message going from a
 client up to a server in the cloud, then down to another client which
