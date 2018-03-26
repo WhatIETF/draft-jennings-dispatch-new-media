@@ -1064,6 +1064,12 @@ Can we use fast VPP systems like fd.io to create a SFU?
 What changes would be needed to map RTP2 into the prefix and suffix of
 hICN?
 
+## BIER
+
+A centralized controller would set up BIER bits for each client in the
+domain and then a router would would receive a packet with the BIER
+bits for all the clients that needed to receive that packet and the
+router(s) would forward it to them. See [@RFC8279].
 
 # Acknowledgements
 
